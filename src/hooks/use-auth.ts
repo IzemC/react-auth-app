@@ -20,7 +20,7 @@ export const useSignIn = (): UseMutationResult<
       return data;
     },
     onSuccess: (data) => {
-      login(data.token);
+      login(data);
     },
     onError: (error) => {
       console.error("Sign-in failed", error);

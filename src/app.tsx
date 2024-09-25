@@ -3,17 +3,48 @@ import { ThemeProvider, createTheme } from "@mui/material/styles";
 import Welcome from "./pages/welcome";
 import SignIn from "./pages/sign-in";
 import SignUp from "./pages/sign-up";
+import Header from "./components/header";
+import useAuthStore from "./store/auth.store";
+import { useEffect } from "react";
+import AuthRoute from "./components/auth-route";
 
 const theme = createTheme();
 function App() {
+  const { initializeAuth, hasInitialize } = useAuthStore();
+
+  useEffect(() => {
+    initializeAuth();
+  }, [initializeAuth]);
+
   return (
     <ThemeProvider theme={theme}>
       <Router>
-        <Routes>
-          <Route path="/" element={<Welcome />} />
-          <Route path="/signin" element={<SignIn />} />
-          <Route path="/signup" element={<SignUp />} />
-        </Routes>
+        {hasInitialize && (
+          <>
+            <Header />
+            <Routes>
+              <Route
+                path="/"
+                element={
+                  <AuthRoute component={<Welcome />} isProtected={true} />
+                }
+              />
+
+              <Route
+                path="/signin"
+                element={
+                  <AuthRoute component={<SignIn />} isProtected={false} />
+                }
+              />
+              <Route
+                path="/signup"
+                element={
+                  <AuthRoute component={<SignUp />} isProtected={false} />
+                }
+              />
+            </Routes>
+          </>
+        )}
       </Router>
     </ThemeProvider>
   );

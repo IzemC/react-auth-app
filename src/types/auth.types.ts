@@ -1,14 +1,13 @@
-export interface AuthResponse {
-  token: string;
-}
+import { z } from "zod";
+import { signUpSchema } from "../schemas/signup.schema";
+import { signInSchema } from "../schemas/signin.schema";
+import { ApiResponse } from "./response.types";
 
-export interface SignInCredentials {
+export type AuthResponse = ApiResponse<{
+  access_token: string;
   email: string;
-  password: string;
-}
+}>;
 
-export interface SignUpCredentials {
-  email: string;
-  password: string;
-  confirmPassword?: string;
-}
+export type SignInCredentials = z.infer<typeof signInSchema>;
+
+export type SignUpCredentials = z.infer<typeof signUpSchema>;

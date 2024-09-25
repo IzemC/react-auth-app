@@ -2,6 +2,7 @@ import ReactDOM from "react-dom/client";
 import App from "./app";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import "./index.css";
 
 const theme = createTheme({
   palette: {

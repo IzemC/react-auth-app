@@ -1,8 +1,7 @@
-import { useState, FormEvent } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 import {
   Container,
-  TextField,
-  Button,
   Box,
   Typography,
   Tooltip,
@@ -10,20 +9,30 @@ import {
 } from "@mui/material";
 import { Link, useNavigate } from "react-router-dom";
 import { useSignIn } from "../hooks/use-auth";
+import { TextField } from "../components/input";
+import { Button } from "../components/button";
+import { signInSchema } from "../schemas/signin.schema";
 import { SignInCredentials } from "../types/auth.types";
 
 const SignIn = () => {
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
   const navigate = useNavigate();
   const signInMutation = useSignIn();
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>): void => {
-    e.preventDefault();
-    const credentials: SignInCredentials = { email, password };
-    signInMutation.mutate(credentials, {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<SignInCredentials>({
+    resolver: zodResolver(signInSchema),
+  });
+
+  const onSubmit = (data: SignInCredentials) => {
+    signInMutation.mutate(data, {
       onSuccess: () => {
         navigate("/");
+      },
+      onError: (error) => {
+        console.error(error);
       },
     });
   };
@@ -36,63 +45,102 @@ const SignIn = () => {
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
+          backgroundColor: "#f0f4f8",
+          padding: 4,
+          borderRadius: 2,
+          boxShadow: "0px 8px 20px rgba(0, 0, 0, 0.1)",
+          maxWidth: "400px",
+          margin: "0 auto",
         }}
       >
-        <Typography component="h1" variant="h5">
-          Sign In
+        <Typography
+          component="h1"
+          variant="h4"
+          sx={{
+            fontWeight: "bold",
+            marginBottom: 2,
+            color: "#3f51b5",
+          }}
+        >
+          Welcome Back!
         </Typography>
-        <Box component="form" noValidate onSubmit={handleSubmit} sx={{ mt: 1 }}>
+        <Typography
+          variant="body2"
+          sx={{
+            marginBottom: 3,
+            textAlign: "center",
+            color: "#757575",
+            maxWidth: "320px",
+          }}
+        >
+          Please sign in to your account with your email and password below.
+        </Typography>
+
+        <Box
+          component="form"
+          noValidate
+          onSubmit={handleSubmit(onSubmit)}
+          sx={{ mt: 1 }}
+        >
           <TextField
-            margin="normal"
-            required
-            fullWidth
             id="email"
             label="Email Address"
-            name="email"
             autoComplete="email"
             autoFocus
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            error={!!errors.email}
+            helperText={errors.email?.message}
+            {...register("email")}
           />
+
           <TextField
-            margin="normal"
-            required
-            fullWidth
-            name="password"
+            id="password"
             label="Password"
             type="password"
-            id="password"
             autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            error={!!errors.password}
+            helperText={errors.password?.message}
+            {...register("password")}
           />
+
           {signInMutation.isError && (
-            <Typography color="error">Invalid login credentials</Typography>
+            <Typography color="error" sx={{ mt: 2, textAlign: "center" }}>
+              {signInMutation.error?.toString() ??
+                "Error signing in, Please try again."}
+            </Typography>
           )}
+
           <Tooltip
-            title={
-              signInMutation.isPending ? "Logging in..." : "Click to sign in"
-            }
+            title={isSubmitting ? "Logging in..." : "Click to sign in"}
+            placement="top"
           >
             <span>
-              <Button
-                type="submit"
-                fullWidth
-                variant="contained"
-                sx={{ mt: 3, mb: 2 }}
-                disabled={signInMutation.isPending}
-              >
-                {signInMutation.isPending ? (
-                  <CircularProgress size={24} />
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <CircularProgress size={24} sx={{ color: "white" }} />
                 ) : (
                   "Sign In"
                 )}
               </Button>
             </span>
           </Tooltip>
-          <Box sx={{ textAlign: "center" }}>
-            <Link to="/signup">{"Don't have an account? Sign Up"}</Link>
-          </Box>
+
+          <Typography
+            variant="body2"
+            sx={{
+              textAlign: "center",
+              mt: 2,
+              color: "#757575",
+              fontSize: "0.9rem",
+            }}
+          >
+            {"Don't have an account? "}
+            <Link
+              to="/signup"
+              style={{ color: "#3f51b5", textDecoration: "none" }}
+            >
+              Sign Up
+            </Link>
+          </Typography>
         </Box>
       </Box>
     </Container>

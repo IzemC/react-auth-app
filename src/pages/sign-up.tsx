@@ -1,8 +1,7 @@
-import { FormEvent, useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 import {
   Container,
-  TextField,
-  Button,
   Box,
   Typography,
   Tooltip,
@@ -10,25 +9,32 @@ import {
 } from "@mui/material";
 import { Link, useNavigate } from "react-router-dom";
 import { useSignUp } from "../hooks/use-auth";
-import { SignUpCredentials } from "../types/auth.types";
+import { TextField } from "../components/input";
+import { Button } from "../components/button";
+import { signUpSchema } from "../schemas/signup.schema";
+import { z } from "zod";
+
+type SignUpFormData = z.infer<typeof signUpSchema>;
 
 const SignUp = () => {
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [confirmPassword, setConfirmPassword] = useState<string>("");
   const navigate = useNavigate();
   const signUpMutation = useSignUp();
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>): void => {
-    e.preventDefault();
-    if (password !== confirmPassword) {
-      alert("Passwords do not match");
-      return;
-    }
-    const credentials: SignUpCredentials = { email, password };
-    signUpMutation.mutate(credentials, {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<SignUpFormData>({
+    resolver: zodResolver(signUpSchema),
+  });
+
+  const onSubmit = (data: SignUpFormData) => {
+    signUpMutation.mutate(data, {
       onSuccess: () => {
         navigate("/signin");
+      },
+      onError: (error) => {
+        console.error(error);
       },
     });
   };
@@ -41,74 +47,112 @@ const SignUp = () => {
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
+          backgroundColor: "#f0f4f8",
+          padding: 4,
+          borderRadius: 2,
+          boxShadow: "0px 8px 20px rgba(0, 0, 0, 0.1)",
+          maxWidth: "400px",
+          margin: "0 auto",
         }}
       >
-        <Typography component="h1" variant="h5">
-          Sign Up
+        <Typography
+          component="h1"
+          variant="h4"
+          sx={{
+            fontWeight: "bold",
+            marginBottom: 2,
+            color: "#3f51b5",
+          }}
+        >
+          Create an Account
         </Typography>
-        <Box component="form" noValidate onSubmit={handleSubmit} sx={{ mt: 1 }}>
+        <Typography
+          variant="body2"
+          sx={{
+            marginBottom: 3,
+            textAlign: "center",
+            color: "#757575",
+            maxWidth: "320px",
+          }}
+        >
+          Fill in your details below to sign up and get started with your
+          account.
+        </Typography>
+
+        <Box
+          component="form"
+          noValidate
+          onSubmit={handleSubmit(onSubmit)}
+          sx={{ mt: 1 }}
+        >
           <TextField
-            margin="normal"
-            required
-            fullWidth
             id="email"
             label="Email Address"
-            name="email"
             autoComplete="email"
             autoFocus
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            error={!!errors.email}
+            helperText={errors.email?.message}
+            {...register("email")}
           />
+
           <TextField
-            margin="normal"
-            required
-            fullWidth
-            name="password"
+            id="password"
             label="Password"
             type="password"
-            id="password"
             autoComplete="new-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            error={!!errors.password}
+            helperText={errors.password?.message}
+            {...register("password")}
           />
+
           <TextField
-            margin="normal"
-            required
-            fullWidth
-            name="confirmPassword"
+            id="confirmPassword"
             label="Confirm Password"
             type="password"
-            id="confirmPassword"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
+            error={!!errors.confirmPassword}
+            helperText={errors.confirmPassword?.message}
+            {...register("confirmPassword")}
           />
+
           {signUpMutation.isError && (
-            <Typography color="error">Error signing up</Typography>
+            <Typography color="error" sx={{ mt: 2, textAlign: "center" }}>
+              {signUpMutation.error?.toString() ??
+                "Error signing up, Please try again."}
+            </Typography>
           )}
+
           <Tooltip
-            title={
-              signUpMutation.isPending ? "Signing up..." : "Click to sign up"
-            }
+            title={isSubmitting ? "Signing up..." : "Click to sign up"}
+            placement="top"
           >
             <span>
-              <Button
-                type="submit"
-                fullWidth
-                variant="contained"
-                sx={{ mt: 3, mb: 2 }}
-                disabled={signUpMutation.isPending}
-              >
-                {signUpMutation.isPending ? (
-                  <CircularProgress size={24} />
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <CircularProgress size={24} sx={{ color: "white" }} />
                 ) : (
                   "Sign Up"
                 )}
               </Button>
             </span>
           </Tooltip>
-          <Box sx={{ textAlign: "center" }}>
-            <Link to="/signin">{"Already have an account? Sign In"}</Link>
-          </Box>
+
+          <Typography
+            variant="body2"
+            sx={{
+              textAlign: "center",
+              mt: 2,
+              color: "#757575",
+              fontSize: "0.9rem",
+            }}
+          >
+            Already have an account?{" "}
+            <Link
+              to="/signin"
+              style={{ color: "#3f51b5", textDecoration: "none" }}
+            >
+              Sign In
+            </Link>
+          </Typography>
         </Box>
       </Box>
     </Container>
